@@ -4,213 +4,266 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>GrowCastle — prosty klon</title>
+<title>GrowCastle — Klon (grafika canvas)</title>
 <style>
-  :root{--bg:#0d47a1;--panel:#ffffffdd}
-  html,body{height:100%;margin:0;font-family:Inter, system-ui, Roboto, Arial}
-  body{background:linear-gradient(#4fc3f7,#0d47a1);display:flex;align-items:center;justify-content:center;padding:18px}
-  .wrap{width:1100px;max-width:100%;display:grid;grid-template-columns:720px 1fr;gap:16px}
-  canvas{width:100%;height:680px;background:transparent;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .panel{background:var(--panel);border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
-  h2{margin:4px 0 8px}
+  :root{--bg:#0b63d8;--panel:#ffffffee}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial}
+  body{background:linear-gradient(#7ec0ff,#0b63d8);display:flex;align-items:center;justify-content:center;padding:18px}
+  .wrap{width:1200px;max-width:100%;display:grid;grid-template-columns:800px 1fr;gap:18px}
+  canvas{background:#83c7ff;border-radius:12px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+  h2{margin:4px 0 12px}
   .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
   .stat{background:#ffffffcc;padding:8px;border-radius:8px;font-weight:700}
-  .shop .item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;margin-bottom:8px;background:#ffffffcc}
-  button{cursor:pointer;padding:8px 12px;border-radius:8px;border:none;background:#0d47a1;color:white;font-weight:700}
-  .small{padding:6px 8px;font-size:14px}
-  footer{font-size:12px;color:#333;margin-top:8px}
-  .note{font-size:13px;color:#222}
+  .shop .item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;margin-bottom:8px;background:#ffffffdd}
+  button{cursor:pointer;padding:8px 12px;border-radius:8px;border:none;background:#0b63d8;color:white;font-weight:700}
+  .muted{font-size:13px;color:#333}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div style="position:relative">
-      <canvas id="game" width="720" height="680"></canvas>
-    </div><div class="panel shop">
-  <h2>GrowCastle (wersja uproszczona)</h2>
-  <div class="stats">
-    <div class="stat">Złoto: <span id="gold">100</span></div>
-    <div class="stat">Zamek: <span id="castleHp">20</span></div>
-    <div class="stat">Fala: <span id="wave">0</span></div>
-    <div class="stat">XP: <span id="xp">0</span></div>
+    <div>
+      <canvas id="game" width="800" height="680"></canvas>
+    </div>
+    <div class="panel">
+      <h2>GrowCastle — klon (grafika canvas)</h2>
+      <div class="stats">
+        <div class="stat">Złoto: <span id="gold">0</span></div>
+        <div class="stat">Zamek: <span id="castleHp">0</span></div>
+        <div class="stat">Fala: <span id="wave">0</span></div>
+      </div><div class="shop">
+    <h3>Sklep wież</h3>
+    <div class="item">
+      <div>
+        <strong>Łucznik</strong><div class="muted">Szybkie strzały, średni zasięg</div>
+      </div>
+      <div>
+        <div>Koszt: 40</div>
+        <button id="buy-arch">Kup</button>
+      </div>
+    </div>
+    <div class="item">
+      <div>
+        <strong>Mage</strong><div class="muted">AOE, wolniejszy</div>
+      </div>
+      <div>
+        <div>Koszt: 85</div>
+        <button id="buy-mage">Kup</button>
+      </div>
+    </div>
+    <div class="item">
+      <div>
+        <strong>Kanonierek</strong><div class="muted">Silny jednowyborowy strzał</div>
+      </div>
+      <div>
+        <div>Koszt: 130</div>
+        <button id="buy-cannon">Kup</button>
+      </div>
+    </div>
   </div>
 
-  <h3>Sklep</h3>
-  <div class="item">
-    <div>Wieża Strzał 🔰<br><small>Tanio, strzały</small></div>
-    <div>
-      <div>Koszt: 30</div>
-      <button id="buy-arch">Kup</button>
-    </div>
-  </div>
-  <div class="item">
-    <div>Wieża Mag 🔮<br><small>Więcej damage</small></div>
-    <div>
-      <div>Koszt: 60</div>
-      <button id="buy-mage">Kup</button>
-    </div>
-  </div>
-  <div class="item">
-    <div>Wieżyczka Mała 🛡️<br><small>Staje się barierą</small></div>
-    <div>
-      <div>Koszt: 20</div>
-      <button id="buy-block">Kup</button>
-    </div>
-  </div>
-
-  <h3>Sterowanie</h3>
-  <p class="note">Kliknij kafelek na mapie, aby postawić zakupioną wieżyczkę (nie możesz stawiać na torze spawnu). Kupując wieżę jej koszt jest od razu pobierany.</p>
-  <div style="display:flex;gap:8px;margin-top:8px">
+  <div style="margin-top:12px;display:flex;gap:8px">
     <button id="startWave">Start Fali</button>
-    <button id="upgrade-hero">Ulepsz Bohatera (50)</button>
+    <button id="saveBtn">Zapisz (local)</button>
+    <button id="loadBtn">Wczytaj</button>
   </div>
 
   <div style="margin-top:12px">
-    <h3>Bohater 🗡️</h3>
-    <div class="note">Twoja główna jednostka stoi przy zamku. Ma poziom, atakuje natarcia i daje premie.</div>
+    <h3>Bohater</h3>
+    <div class="muted">Bohater stoi przy zamku — ma poziomy i atakuje automatycznie.</div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button id="hero-up">Ulepsz bohatera (100)</button>
+    </div>
   </div>
 
-  <footer>
-    Grafika: tylko emotkami — potwory 👾, wieże 🔰/🔮, bohater 🗡️, zamek 🏰.
-  </footer>
+  <div style="margin-top:12px">
+    <h3>Instrukcje</h3>
+    <p class="muted">Kup wieżę -> kliknij pole na planszy, aby postawić. Nie można stawiać w strefie spawn/ścieżek. Grafiki są malowane w canvas (bez zewnętrznych assetów).</p>
+  </div>
+
 </div>
 
   </div><script>
-/* GrowCastle — prosty klon: 3 pasy, spawny z lewej, zamek po prawej. Emotkigrafika. */
+/*
+  Rozbudowany, samodzielny single-file klon GrowCastle.
+  Grafika: rysowane sprite'y w canvas (bez plików zewn.).
+  Mechanika: fale, różne wieże, bohater, xp, złoto, dropy.
+*/
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const TILE = 40; const COLS = Math.floor(canvas.width / TILE); const ROWS = Math.floor(canvas.height / TILE);
-// pasy: ustalamy trzy rzędy ścieżek
+
+// map: pasy 3 poziome ścieżki (jak GrowCastle). Spawny z lewej, zamek przy prawej krawędzi
 const lanes = [ Math.floor(ROWS*0.25), Math.floor(ROWS*0.5), Math.floor(ROWS*0.75) ];
+const castleCol = COLS - 2; // kolumna zamku (z prawej)
 
-let gold = 100, castleHp = 20, wave = 0, xp = 0;
-document.getElementById('gold').innerText = gold; document.getElementById('castleHp').innerText = castleHp; document.getElementById('wave').innerText = wave; document.getElementById('xp').innerText = xp;
+// state
+let gold = 200, castleHp = 50, wave = 0, xp = 0;
+let playing = false;
 
-const towerTypes = {
-  arch: {emoji:'🔰', cost:30, range:120, rate:0.9, damage:1},
-  mage: {emoji:'🔮', cost:60, range:140, rate:1.4, damage:3},
-  block: {emoji:'🛡️', cost:20, range:0, rate:0, damage:0, block:true}
+// UI
+const goldEl = document.getElementById('gold'); const castleEl = document.getElementById('castleHp'); const waveEl = document.getElementById('wave');
+updateUI();
+
+// tower definitions
+const TOWERS = {
+  archer: {name:'Łucznik', cost:40, range:140, rate:0.6, dmg:1, color:'#2e7d32'},
+  mage: {name:'Mage', cost:85, range:120, rate:1.4, dmg:2, aoe:20, color:'#6a1b9a'},
+  cannon: {name:'Kanonierek', cost:130, range:180, rate:2.2, dmg:6, color:'#bf360c'}
 };
-let selected = null; // type purchased to place
+
+let selectedToPlace = null;
+const towers = []; // {col,row,type,cooldown}
+const enemies = []; // {lane,pos,hp,speed,type,maxHp}
 
 // hero
-let hero = {emoji:'🗡️', level:1, dmg:2, xpForNext:100};
-
-// game objects
-const towers = []; // {x,y,type,cooldown}
-const enemies = []; // {lane,pos,hp,speed,type}
-
-// spawn config
-function spawnEnemyForWave(w){ const baseCount = 5 + w*2; for(let i=0;i<baseCount;i++){ const delay = i*700; setTimeout(()=>{
-    const lane = lanes[Math.floor(Math.random()*lanes.length)];
-    const typeRoll = Math.random();
-    const hp = 2 + Math.floor(w*0.8) + (typeRoll>0.85?4:0);
-    const speed = 0.4 + w*0.02 + (typeRoll>0.85? -0.05 : 0);
-    enemies.push({lane:lane, pos:0, hp:hp, speed:speed, type:'basic'});
-  }, delay);
- }
-}
+let hero = {lvl:1,dmg:4,cd:0.6,_timer:0, xpToNext:200};
 
 // buy buttons
-document.getElementById('buy-arch').onclick = ()=>{ if(gold>=towerTypes.arch.cost){ gold -= towerTypes.arch.cost; selected='arch'; updateUI(); } }
-document.getElementById('buy-mage').onclick = ()=>{ if(gold>=towerTypes.mage.cost){ gold -= towerTypes.mage.cost; selected='mage'; updateUI(); } }
-document.getElementById('buy-block').onclick = ()=>{ if(gold>=towerTypes.block.cost){ gold -= towerTypes.block.cost; selected='block'; updateUI(); } }
+document.getElementById('buy-arch').onclick = ()=>{ if(gold >= TOWERS.archer.cost){ gold -= TOWERS.archer.cost; selectedToPlace = 'archer'; updateUI(); } };
+document.getElementById('buy-mage').onclick = ()=>{ if(gold >= TOWERS.mage.cost){ gold -= TOWERS.mage.cost; selectedToPlace = 'mage'; updateUI(); } };
+document.getElementById('buy-cannon').onclick = ()=>{ if(gold >= TOWERS.cannon.cost){ gold -= TOWERS.cannon.cost; selectedToPlace = 'cannon'; updateUI(); } };
 
-document.getElementById('startWave').onclick = ()=>{ if(!playing) startWave(); }
-document.getElementById('upgrade-hero').onclick = ()=>{ if(gold>=50){ gold-=50; hero.level++; hero.dmg += 1; hero.xpForNext = Math.floor(hero.xpForNext*1.5); updateUI(); } }
+document.getElementById('startWave').onclick = ()=>{ if(!playing) startWave(); };
+document.getElementById('hero-up').onclick = ()=>{ if(gold >= 100){ gold -= 100; hero.lvl++; hero.dmg += 2; hero.xpToNext = Math.floor(hero.xpToNext*1.6); updateUI(); } };
 
-function updateUI(){ document.getElementById('gold').innerText = gold; document.getElementById('castleHp').innerText = castleHp; document.getElementById('wave').innerText = wave; document.getElementById('xp').innerText = xp; }
+// save/load
+document.getElementById('saveBtn').onclick = ()=>{ const save = {gold,castleHp,wave,xp,towers,hero}; localStorage.setItem('gc_save', JSON.stringify(save)); alert('Zapisano lokalnie'); };
+document.getElementById('loadBtn').onclick = ()=>{ const s = localStorage.getItem('gc_save'); if(!s){ alert('Brak zapisu'); return; } const data = JSON.parse(s); gold = data.gold; castleHp = data.castleHp; wave = data.wave; xp = data.xp; // restore towers (strip methods)
+  towers.length = 0; for(let t of data.towers){ towers.push(t); } hero = data.hero || hero; updateUI(); };
 
-// place tower on click
-canvas.addEventListener('click',(ev)=>{
-  const rect = canvas.getBoundingClientRect(); const x = ev.clientX - rect.left; const y = ev.clientY - rect.top; const cx = Math.floor(x/TILE); const cy = Math.floor(y/TILE);
-  // don't allow placing on far right column (castle zone) or on lanes path (spawn path left to right)
-  const castleCol = COLS-1;
-  if(cx >= castleCol) return;
-  // if selected
-  if(selected){ // don't place on lane tiles (where centers align)
-    // allow blocks anywhere non-lane
-    const isOnLane = lanes.includes(cy);
-    if(isOnLane && towerTypes[selected].block !== true) return; // arch/mage allowed on lane center only? For simplicity require placing near lane center
-    // ensure no tower exists there
-    if(towers.some(t=>t.x===cx && t.y===cy)) { selected=null; updateUI(); return; }
-    towers.push({x:cx,y:cy,type:selected,cooldown:0}); selected=null; updateUI();
-  }
+// placement logic
+canvas.addEventListener('click', (ev)=>{
+  const rect = canvas.getBoundingClientRect(); const x = ev.clientX - rect.left; const y = ev.clientY - rect.top; const col = Math.floor(x / TILE); const row = Math.floor(y / TILE);
+  // disallow placement in castle column and leftmost column where spawn occurs
+  if(col <= 1 || col >= castleCol) { selectedToPlace = null; updateUI(); return; }
+  // require placing near lanes (within 1 tile) for archer/mage/cannon
+  const nearLane = lanes.some(l => Math.abs(l - row) <= 1);
+  if(!nearLane) { selectedToPlace = null; updateUI(); return; }
+  // check occupied
+  if(towers.some(t=>t.col===col && t.row===row)) { selectedToPlace = null; updateUI(); return; }
+  if(selectedToPlace){ towers.push({col,row,type:selectedToPlace,cooldown:0}); selectedToPlace=null; updateUI(); }
 });
 
-let playing=false;
-function startWave(){ wave++; updateUI(); playing=true; spawnEnemyForWave(wave); // end check
-  // allow playing until all enemies died
-  const checkEnd = setInterval(()=>{ if(enemies.length===0){ playing=false; clearInterval(checkEnd); } }, 500);
-}
-
-// game loop
-let last = performance.now();
-function tick(delta){ // move enemies
-  const dt = delta*0.06;
-  for(let e of enemies){ e.pos += e.speed * dt; }
-  // check reach castle
-  for(let i=enemies.length-1;i>=0;i--){ const e = enemies[i]; if(e.pos >= COLS-1){ castleHp -= 1; enemies.splice(i,1); if(castleHp<=0){ alert('Przegrałeś — zamek zniszczony!'); resetGame(); return; } updateUI(); } }
-  // towers shoot
-  for(let t of towers){ const tt = towerTypes[t.type]; if(tt.block) continue; t.cooldown -= dt; if(t.cooldown <= 0){ // find enemy in range
-      const tx = t.x*TILE + TILE/2; const ty = t.y*TILE + TILE/2;
-      let targetIdx = -1; let best = 1e9;
-      for(let i=0;i<enemies.length;i++){ const e = enemies[i]; const ex = Math.min(Math.floor(e.pos), COLS-1) * TILE + TILE/2; const ey = e.lane * TILE + TILE/2; const d = Math.hypot(ex-tx, ey-ty); if(d <= tt.range && d < best){ best=d; targetIdx=i; } }
-      if(targetIdx>=0){ enemies[targetIdx].hp -= tt.damage; t.cooldown = tt.rate; if(enemies[targetIdx].hp <= 0){ // kill
-          gold += 10 + Math.floor(wave*1.2); xp += 10; enemies.splice(targetIdx,1); updateUI(); levelCheck(); }
-      }
-    }
-  }
-  // hero attack: hits closest enemy near castle
-  if(hero){ // hero attacks every tick by cooldown simulated via simple timer
-    hero._cd = (hero._cd || 0) - dt;
-    if(hero._cd <= 0){ // find nearest enemy on any lane with pos near castle
-      let bestDist = -1; let idx = -1;
-      for(let i=0;i<enemies.length;i++){ const e = enemies[i]; const dist = (COLS-1) - e.pos; if(idx===-1 || dist < bestDist){ bestDist = dist; idx = i; } }
-      if(idx>=0 && bestDist < 6){ enemies[idx].hp -= hero.dmg; hero._cd = 0.6; if(enemies[idx].hp <=0){ gold += 12; xp += 12; enemies.splice(idx,1); updateUI(); levelCheck(); } }
-    }
-  }
-}
-
-function levelCheck(){ if(xp >= hero.xpForNext){ xp -= hero.xpForNext; hero.level++; hero.dmg += 1; hero.xpForNext = Math.floor(hero.xpForNext * 1.6); updateUI(); } }
-
-function resetGame(){ gold=100; castleHp=20; wave=0; xp=0; enemies.length=0; towers.length=0; hero = {emoji:'🗡️', level:1, dmg:2, xpForNext:100}; updateUI(); }
-
-// draw
-function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
-  // background sky with faint clouds
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  for(let i=0;i<6;i++){ ctx.font = '32px serif'; ctx.fillText('☁️', 40 + i*110, 40 + (i*45)%160); }
-  // ground
-  ctx.fillStyle = '#2e7d32'; ctx.fillRect(0, ROWS*TILE - TILE*2, canvas.width, TILE*2);
-
-  // lanes path (horizontal)
-  ctx.strokeStyle = '#00000020'; ctx.lineWidth = 2;
-  for(let lane of lanes){ for(let c=0;c<COLS;c++){ ctx.fillStyle = '#cfae8a33'; ctx.fillRect(c*TILE, lane*TILE, TILE, TILE); ctx.strokeRect(c*TILE, lane*TILE, TILE, TILE); } }
-
-  // castle on right
-  const castleX = (COLS-1)*TILE + TILE/2; const castleY = Math.floor(ROWS/2)*TILE + TILE/2;
-  ctx.font = '44px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🏰', castleX, castleY);
-
-  // towers
-  ctx.font = '28px serif';
-  for(let t of towers){ ctx.fillText(towerTypes[t.type].emoji, t.x*TILE + TILE/2, t.y*TILE + TILE/2); }
-
-  // enemies
-  ctx.font = '28px serif';
-  for(let e of enemies){ const ex = Math.min(e.pos, COLS-1) * TILE + TILE/2; const ey = e.lane * TILE + TILE/2; ctx.fillText('👾', ex, ey); // hp bar
-    const barW = TILE-6; ctx.fillStyle='red'; ctx.fillRect(ex - barW/2, ey - TILE/2 + 6, Math.max(0, (e.hp/6)) * barW, 6); ctx.strokeStyle='black'; ctx.strokeRect(ex - barW/2, ey - TILE/2 + 6, barW,6);
-  }
-
-  // hero near castle (below)
-  ctx.fillText(hero.emoji + ' Lv'+hero.level, castleX, castleY + 60);
-
-  // selected preview
-  if(selected){ canvas.style.cursor='crosshair'; } else canvas.style.cursor='default';
+// spawn waves
+function startWave(){ wave++; updateUI(); playing=true; const count = 6 + wave*3; const spawnInterval = Math.max(350, 900 - wave*20);
+  for(let i=0;i<count;i++){ setTimeout(()=>{
+    const lane = lanes[i % lanes.length];
+    const type = (Math.random() < Math.min(0.15, wave*0.02)) ? 'big' : 'normal';
+    const hp = type==='big' ? 10 + Math.floor(wave*1.5) : 4 + Math.floor(wave*1.1);
+    const speed = type==='big' ? 0.32 : 0.5 + Math.min(0.3, wave*0.01);
+    enemies.push({lane,pos:0,hp,speed,type,maxHp:hp});
+  }, i*spawnInterval); }
+  // end check
+  const endCheck = setInterval(()=>{ if(enemies.length===0){ playing=false; clearInterval(endCheck); } }, 500);
 }
 
 // main loop
-let then = performance.now(); function loop(now){ const delta = now - then; then = now; tick(delta); draw(); requestAnimationFrame(loop); }
+let last = performance.now(); function loop(now){ const dt = now - last; last = now; update(dt); draw(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
+
+function update(dt){ const step = dt * 0.06;
+  // move enemies
+  for(let e of enemies){ e.pos += e.speed * step; }
+  // check reach castle
+  for(let i=enemies.length-1;i>=0;i--){ if(enemies[i].pos >= castleCol){ castleHp -= 1 + Math.floor(wave*0.05); enemies.splice(i,1); if(castleHp <= 0){ alert('Zamek zniszczony — przegrana'); reset(); return; } updateUI(); } }
+
+  // towers shoot
+  for(let t of towers){ const def = TOWERS[t.type]; t.cooldown -= step; if(t.cooldown <= 0){ // find best target in range
+      const tx = t.col*TILE + TILE/2; const ty = t.row*TILE + TILE/2;
+      let bestIdx = -1; let bestDist = 1e9;
+      for(let i=0;i<enemies.length;i++){ const e = enemies[i]; const ex = Math.min(Math.floor(e.pos), COLS-1) * TILE + TILE/2; const ey = e.lane * TILE + TILE/2; const d = Math.hypot(ex-tx, ey-ty); if(d <= def.range && d < bestDist){ bestDist = d; bestIdx = i; } }
+      if(bestIdx >=0){ // apply damage
+        if(def.aoe){ // mage: area
+          const hit = enemies[bestIdx]; const cx = Math.min(Math.floor(hit.pos), COLS-1) * TILE + TILE/2; const cy = hit.lane * TILE + TILE/2;
+          for(let j=enemies.length-1;j>=0;j--){ const en = enemies[j]; const ex = Math.min(Math.floor(en.pos), COLS-1) * TILE + TILE/2; const ey = en.lane * TILE + TILE/2; const d = Math.hypot(ex-cx, ey-cy); if(d <= def.aoe){ en.hp -= def.dmg; if(en.hp <= 0){ gold += 12; xp += 8; enemies.splice(j,1); updateUI(); } }
+          }
+        } else {
+          enemies[bestIdx].hp -= def.dmg;
+          if(enemies[bestIdx].hp <= 0){ gold += 10 + Math.floor(wave*1.2); xp += 10; enemies.splice(bestIdx,1); updateUI(); }
+        }
+        t.cooldown = def.rate;
+      }
+    }
+  }
+
+  // hero attack
+  hero._timer = (hero._timer || 0) - step;
+  if(hero._timer <= 0){ // attack nearest enemy to castle
+    if(enemies.length){ let nearestIdx = 0; let best = 1e9; for(let i=0;i<enemies.length;i++){ const dist = castleCol - enemies[i].pos; if(dist < best){ best = dist; nearestIdx = i; } }
+      enemies[nearestIdx].hp -= hero.dmg; if(enemies[nearestIdx].hp <= 0){ gold += 12; xp += 12; enemies.splice(nearestIdx,1); updateUI(); }
+      hero._timer = hero.cd;
+    }
+  }
+}
+
+function reset(){ gold = 200; castleHp = 50; wave = 0; xp = 0; towers.length = 0; enemies.length = 0; hero = {lvl:1,dmg:4,cd:0.6,_timer:0,xpToNext:200}; updateUI(); }
+
+function updateUI(){ goldEl.innerText = gold; castleEl.innerText = castleHp; waveEl.innerText = wave; }
+
+// draw functions — simple sprites drawn with canvas
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+  // sky
+  const g = ctx.createLinearGradient(0,0,0,canvas.height); g.addColorStop(0,'#8fd3ff'); g.addColorStop(1,'#3aa0ff'); ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // ground and lanes
+  for(let r=0;r<ROWS;r++){ for(let c=0;c<COLS;c++){ ctx.fillStyle = (r%2===0)?'#9be57f':'#78c05b'; ctx.fillRect(c*TILE, r*TILE, TILE, TILE); } }
+
+  // draw lanes path highlight
+  for(let lane of lanes){ ctx.fillStyle = '#cfae8a66'; ctx.fillRect(0, lane*TILE, canvas.width, TILE); }
+
+  // draw towers
+  for(let t of towers){ const x = t.col*TILE + TILE/2; const y = t.row*TILE + TILE/2; const def = TOWERS[t.type]; drawTower(x,y,def); }
+
+  // draw enemies
+  for(let e of enemies){ const ex = Math.min(e.pos, COLS-1) * TILE + TILE/2; const ey = e.lane * TILE + TILE/2; drawEnemy(ex,ey,e); }
+
+  // draw castle
+  const castleX = castleCol * TILE + TILE/2; const castleY = Math.floor(ROWS/2)*TILE + TILE/2; drawCastle(castleX, castleY);
+
+  // draw hero next to castle
+  drawHero(castleX - 60, castleY + 60, hero);
+
+  // HUD overlay: selected placement preview
+  if(selectedToPlace){ canvas.style.cursor='crosshair'; } else canvas.style.cursor='default';
+}
+
+function drawTower(x,y(def),defArg){ }
+
+function drawTower(x,y,def){ // base circle + turret
+  ctx.save(); ctx.translate(x,y);
+  // stand
+  ctx.fillStyle = '#654321'; ctx.fillRect(-12,8,24,16);
+  // body
+  ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fillStyle = def.color || '#555'; ctx.fill();
+  // emblem
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(def.name[0],0,0);
+  ctx.restore();
+}
+
+function drawEnemy(x,y,e){ // body rectangle with eye and hp bar
+  ctx.save(); ctx.translate(x,y);
+  ctx.fillStyle = '#222'; ctx.fillRect(-16,-16,32,32);
+  // face color
+  ctx.fillStyle = e.type==='big' ? '#b71c1c' : '#ffeb3b'; ctx.fillRect(-14,-14,28,28);
+  // eye
+  ctx.fillStyle='black'; ctx.fillRect(-6,-2,6,4);
+  // hp bar
+  const w = 30; ctx.fillStyle='black'; ctx.fillRect(-w/2, -20, w,5); ctx.fillStyle='red'; ctx.fillRect(-w/2, -20, Math.max(0, (e.hp/e.maxHp) * w),5);
+  ctx.restore();
+}
+
+function drawCastle(x,y){ ctx.save(); ctx.translate(x,y);
+  // keep simple multi-tower castle
+  ctx.fillStyle='#8d6e63'; ctx.fillRect(-48,-36,96,72);
+  ctx.fillStyle='#6d4c41'; ctx.fillRect(-36,-28,72,56);
+  ctx.fillStyle='#cfd8dc'; ctx.fillRect(-44,-44,20,12); ctx.fillRect(24,-44,20,12);
+  ctx.font='26px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='black'; ctx.fillText('ZAMEK',0, -50);
+  // hp bar under
+  ctx.fillStyle='black'; ctx.fillRect(-48,46,96,10); ctx.fillStyle='green'; ctx.fillRect(-48,46, Math.max(0, (castleHp/100) * 96),10);
+  ctx.restore(); }
+
+function drawHero(x,y,h){ ctx.save(); ctx.translate(x,y); ctx.fillStyle='#ffd54f'; ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#6d4c41'; ctx.fillRect(-8,8,16,8); ctx.fillStyle='black'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('Lv'+h.lvl,0,0); ctx.restore(); }
+
 </script></body>
 </html>
