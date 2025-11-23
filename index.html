@@ -1,0 +1,185 @@
+<!doctype html>
+
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tower Defense z emotkami</title>
+  <style>
+    :root{--ui-bg:#0b63d8;--panel:#ffffffcc}
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial}
+    body{background:var(--ui-bg);display:flex;align-items:center;justify-content:center}
+    .wrap{width:1024px;max-width:100%;display:grid;grid-template-columns:720px 1fr;gap:18px;padding:18px}
+    canvas{background:linear-gradient(#7ec0ff,#0b63d8);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+    .panel{background:var(--panel);border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+    .shop h3{margin:6px 0 8px}
+    .shop .item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;margin-bottom:8px;background:#ffffffaa}
+    button{cursor:pointer;padding:8px 12px;border-radius:8px;border:none;background:#0b63d8;color:white;font-weight:600}
+    .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .stat{background:#ffffffaa;padding:8px;border-radius:8px}
+    footer{font-size:12px;color:#333;margin-top:8px}
+    /* clouds used as decorative absolute emojis */
+    .clouds{position:absolute;left:0;top:0;pointer-events:none;font-size:36px;opacity:.2}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="position:relative">
+      <div class="clouds" aria-hidden>☁️ ☁️ ☁️</div>
+      <canvas id="game" width="720" height="640"></canvas>
+    </div>
+    <div class="panel shop">
+      <h2>Sklep / Sterowanie</h2>
+      <div class="stats">
+        <div class="stat">Złoto: <span id="gold">50</span></div>
+        <div class="stat">Życie: <span id="hp">10</span></div>
+        <div class="stat">Fala: <span id="wave">0</span></div>
+      </div><h3>Dostępne wieżyczki</h3>
+  <div class="item">
+    <div>Mała wieżyczka 🔰<br><small>Strzela wolno, tani</small></div>
+    <div>
+      <div>Koszt: 25</div>
+      <button id="buy-small">Kup</button>
+    </div>
+  </div>
+  <div class="item">
+    <div>Wieża strzelająca 🎯<br><small>Szybsza, droższa</small></div>
+    <div>
+      <div>Koszt: 45</div>
+      <button id="buy-basic">Kup</button>
+    </div>
+  </div>
+
+  <button id="startWave">Start Fali</button>
+  <button id="fastForward">Przyspiesz</button>
+
+  <footer>
+    Instrukcja: Kliknij na kafel mapy, aby postawić zakupioną wieżyczkę.<br>
+    Grafika: wszystko emotkami — potwory 👾, wieże 🔰🎯, chmury ☁️.
+  </footer>
+</div>
+
+  </div>  <script>
+  // PROSTA GRA TOWER DEFENSE (jednoplanszowa) - emojigrafika
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const TILE = 40; // rozmiar kafla
+  const COLS = Math.floor(canvas.width / TILE);
+  const ROWS = Math.floor(canvas.height / TILE);
+
+  // mapa - 0 = trawa, 1 = ścieżka
+  const map = new Array(ROWS).fill(0).map(()=>new Array(COLS).fill(0));
+  // stwórz prostą ścieżkę od lewej do prawej
+  const path = [];
+  const startRow = Math.floor(ROWS/2);
+  for(let c=0;c<COLS;c++){
+    map[startRow][c]=1;
+    path.push({x:c,y:startRow});
+  }
+
+  // stan gry
+  let gold = 50; let hp=10; let wave=0; let playing=false; let fast=false;
+  document.getElementById('gold').innerText = gold;
+  document.getElementById('hp').innerText = hp;
+  document.getElementById('wave').innerText = wave;
+
+  // wieżyczki i koszty
+  const towerTypes = {
+    small: {emoji:'🔰',cost:25,range:80,rate:1.2,damage:1},
+    basic: {emoji:'🎯',cost:45,range:120,rate:0.7,damage:2}
+  };
+  let selectedTower = null; // typ zakupiony do postawienia
+  document.getElementById('buy-small').onclick = ()=>{ if(gold>=towerTypes.small.cost){ selectedTower='small'; gold -= towerTypes.small.cost; updateUI(); } }
+  document.getElementById('buy-basic').onclick = ()=>{ if(gold>=towerTypes.basic.cost){ selectedTower='basic'; gold -= towerTypes.basic.cost; updateUI(); } }
+
+  document.getElementById('startWave').onclick = ()=>{ if(!playing) startNextWave(); }
+  document.getElementById('fastForward').onclick = ()=>{ fast = !fast; document.getElementById('fastForward').innerText = fast? 'Zwolnij' : 'Przyspiesz'; }
+
+  function updateUI(){ document.getElementById('gold').innerText = gold; document.getElementById('hp').innerText = hp; document.getElementById('wave').innerText = wave; }
+
+  // struktury
+  const towers = []; // {x,y,type,cooldown}
+  const enemies = []; // {pos (float c index),hp,speed}
+  
+  // spawn fali
+  function startNextWave(){ wave++; playing=true; updateUI(); const count = 5 + wave*2; for(let i=0;i<count;i++){
+    const spawnDelay = i * (fast?350:700);
+    setTimeout(()=>spawnEnemy(wave), spawnDelay);
+  }
+  // po fali sprawdź koniec
+  setTimeout(()=>{ playing=false; }, (count+1)* (fast?350:700)); }
+
+  function spawnEnemy(waveNumber){ const hpBase = 2 + Math.floor(waveNumber*0.8); enemies.push({pos:0, hp:hpBase, speed:0.4 + waveNumber*0.02}); }
+
+  // mechanika strzałów - prosty cooldown i trafienia
+  function gameTick(delta){ // poruszanie potworów
+    const speedMultiplier = fast?2:1;
+    for(let e of enemies){ e.pos += e.speed * delta * 0.06 * speedMultiplier; }
+    // usuń jeśli dotarły do końca
+    for(let i=enemies.length-1;i>=0;i--){ if(enemies[i].pos >= path.length){ hp -=1; enemies.splice(i,1); if(hp<=0){ alert('Przegrałeś!'); resetGame(); return; } updateUI(); } }
+
+    // wieże celują
+    for(let t of towers){ t.cooldown -= delta * 0.06 * (fast?2:1);
+      if(t.cooldown <=0){ // znajdź najbliższego w zasięgu
+        const tx = t.x * TILE + TILE/2; const ty = t.y * TILE + TILE/2;
+        let targetIndex=-1; let bestDist=1e9; 
+        for(let i=0;i<enemies.length;i++){
+          const e = enemies[i]; const p = path[Math.floor(e.pos)] || path[path.length-1];
+          const ex = p.x * TILE + TILE/2; const ey = p.y * TILE + TILE/2;
+          const dx = ex-tx; const dy = ey-ty; const d = Math.hypot(dx,dy);
+          if(d <= towerTypes[t.type].range && d < bestDist){ bestDist = d; targetIndex = i; }
+        }
+        if(targetIndex>=0){ // trafienie
+          enemies[targetIndex].hp -= towerTypes[t.type].damage;
+          t.cooldown = towerTypes[t.type].rate;
+          if(enemies[targetIndex].hp <=0){ // umrzyj i daj złoto
+            gold += 10 + Math.floor(wave*1.5);
+            enemies.splice(targetIndex,1);
+            updateUI();
+          }
+        }
+      }
+    }
+  }
+
+  function resetGame(){ gold=50; hp=10; wave=0; enemies.length=0; towers.length=0; updateUI(); }
+
+  // rysowanie
+  function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+    // tło: chmury losowe
+    for(let i=0;i<6;i++){ ctx.font = '26px serif'; ctx.fillText('☁️', 30 + (i*130)%canvas.width, 30 + (i*70)%120); }
+    // narysuj kafle
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        if(map[r][c]===1){ ctx.fillStyle = '#c9ad7e33'; ctx.fillRect(c*TILE, r*TILE, TILE, TILE); }
+        // optional grid
+        ctx.strokeStyle = '#00000008'; ctx.strokeRect(c*TILE, r*TILE, TILE, TILE);
+      }
+    }
+    // rysuj wieże
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let t of towers){ ctx.font = '28px serif'; ctx.fillText(towerTypes[t.type].emoji, t.x*TILE + TILE/2, t.y*TILE + TILE/2); }
+    // rysuj potwory
+    for(let e of enemies){ const p = path[Math.floor(e.pos)] || path[path.length-1]; ctx.font = '28px serif'; ctx.fillText('👾', p.x*TILE + TILE/2, p.y*TILE + TILE/2); 
+      // HP bar
+      const px = p.x*TILE + 6; const py = p.y*TILE + 6; const w = TILE-12; ctx.fillStyle='red'; ctx.fillRect(px,py, w * Math.max(0,e.hp)/10, 6); ctx.strokeStyle='black'; ctx.strokeRect(px,py,w,6);
+    }
+    // informacje (gold/hp) renderowane w panel
+  }
+
+  // kliknięcie na canvas = postawienie wieży jeśli wybrano
+  canvas.addEventListener('click', (ev)=>{
+    const rect = canvas.getBoundingClientRect(); const x= ev.clientX-rect.left; const y = ev.clientY-rect.top; const cx = Math.floor(x/TILE); const cy = Math.floor(y/TILE);
+    // nie można stawiać na ścieżce
+    if(map[cy] && map[cy][cx]===1){ return; }
+    if(selectedTower){ // postaw
+      towers.push({x:cx,y:cy,type:selectedTower,cooldown:0}); selectedTower=null; updateUI();
+    }
+  });
+
+  // pętla gry
+  let last = performance.now();
+  function loop(now){ const delta = now - last; last = now; gameTick(delta); draw(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  </script></body>
+</html>
